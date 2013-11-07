@@ -11,31 +11,18 @@ var mimeTypes = {
 var cache = {};
 
 function cacheAndDeliver(f, cb) {
-
-	fs.stat(f, function(err, stats) {
-		var lastChanged = Date.parse(stats.ctime);
-		var isUpdated = (cache[f]) && lastChanged > cache[f].timestamp;
-
-		if(!cache[f] || isUpdated) {
-			fs.readFile(f, function(err, data) {
-				console.log(f + '　をファイルから読み込みます');
-				if(!err) {
-					cache[f] = {content: data, timestamp: Date.now() };
-				}
-				cb(err, data);
-			});
-			return;
-		}
-
-		console.log(f + '　をキャッシュから読み込みます');
-		cb(null, cache[f].content);
-	});
-
-
-
+	if(!cache[f]) {
+		fs.readFile(f, function(err, data) {
+			if(!err) {
+				cache[f] = {content: data};
+			}
+			cb(err, data);
+		});
+		return;
+	}
+	console.log(f + '　をキャッシュから読み込みます');
+	cb(null, cache[f].content);
 }
-
-
 
 http.createServer(function(request,response) {
 
@@ -44,17 +31,11 @@ http.createServer(function(request,response) {
 	fs.exists(f, function(exists) {
 		if(exists) {
 			cacheAndDeliver(f, function(err, data) {
-
-					cache[f] = {
-						content: data,
-						timestamp: Date.now()
-					};
-	
 				if (err) {
 					response.writeHead(500);
 					response.end('ServerError!');
 					return;
-				}
+				};
 				var headers = {'Content-Type': mimeTypes[path.extname(f)]};
 				response.writeHead(200, headers);
 				response.end(data);
