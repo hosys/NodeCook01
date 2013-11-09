@@ -11,7 +11,6 @@ var mimeTypes = {
 var cache = {};
 
 function cacheAndDeliver(f, cb) {
-
 	fs.stat(f, function(err, stats) {
 		var lastChanged = Date.parse(stats.ctime);
 		var isUpdated = (cache[f]) && lastChanged > cache[f].timestamp;
@@ -31,25 +30,17 @@ function cacheAndDeliver(f, cb) {
 		cb(null, cache[f].content);
 	});
 
-
-
 }
 
 
 
-http.createServer(function(request,response) {
+http.createServer(function (request,response) {
 
-	var lookup = path.basename(decodeURI(request.url)) || 'index.html';
+	var lookup = path.basename(decodeURI(request.url)) || 'index.html',
 	f = 'content/' + lookup;
-	fs.exists(f, function(exists) {
-		if(exists) {
-			cacheAndDeliver(f, function(err, data) {
-
-					cache[f] = {
-						content: data,
-						timestamp: Date.now()
-					};
-	
+	fs.exists(f, function (exists) {
+		if (exists) {
+			cacheAndDeliver(f, function(err, data) {	
 				if (err) {
 					response.writeHead(500);
 					response.end('ServerError!');
@@ -68,3 +59,5 @@ http.createServer(function(request,response) {
 	});
 
 }).listen(8080);
+
+
