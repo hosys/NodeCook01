@@ -37,7 +37,7 @@ function cacheAndDeliver(f, cb) {
 http.createServer(function (request,response) {
 
 	var lookup = path.basename(decodeURI(request.url)) || 'index.html',
-	f = 'content/' + lookup;
+		f = 'content/' + lookup;
 	fs.exists(f, function (exists) {
 		if (exists) {
 			cacheAndDeliver(f, function(err, data) {	
