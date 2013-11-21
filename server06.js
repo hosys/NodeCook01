@@ -8,27 +8,7 @@ var mimeTypes = {
 	'.css': 'text/css'
 };
 
-var cache = {
-	store: {},
-	maxSize: 26214400,
-	maxAge: 5400 * 1000,
-	cleanAfter: 7200 * 1000,
-	cleanedAt: 0,
-	clean: function (now) {
-		if (now - this.cleanAfter > this.cleanedAt) {
-			this.cleanedAt = now;
-			var that = this;
-			Object.keys(this.store).forEach(function (file) {
-				if(now > that.store[file].timestamp + that.maxAge) {
-					delete that.store[file];
-				}
-			});
-		}
-
-
-		
-	}
-};
+var cache = {};
 
 http.createServer(function (request,response) {
 
@@ -42,7 +22,7 @@ http.createServer(function (request,response) {
 				response.writeHead(200, headers);
 				response.end(cache[f].content);
 				return;
-			}
+			};
 
 			var s = fs.createReadStream(f).once('open', function () {
 				response.writeHead(200, headers);
@@ -55,14 +35,12 @@ http.createServer(function (request,response) {
 			});
 
 			fs.Stats(f, function (err, stats) {
-				if (stats.size < cache.maxSize) {
-					var bufferOffset = 0;
-					cache[f] = {content: new Buffer(stats.size), timestamp: Date.now()};
-					s.on('data', function (data) {
-						data.copy(cache[f].content, bufferOffset);
-						bufferOffset += data.length;
-					});
-				}
+				var bufferOffset = 0;
+				cache[f] = {content: new Buffer(stats.size)};
+				s.on('data', function (data) {
+					data.copy(cache[f].content, bufferOffset);
+					bufferOffset += data.length;
+				});
 			});
 			return;
 		}
@@ -72,6 +50,5 @@ http.createServer(function (request,response) {
 
 		// console.log(exists ? lookup + "は存在します" : lookup + "は存在しません" );
 	});
-	cache.clean(Date.now());
 
 }).listen(8080);
